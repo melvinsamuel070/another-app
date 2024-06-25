@@ -1,0 +1,78 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      # This action is to print random generated object numbers
+      - name: "Print the Github Object version number"
+        run: |
+            echo "APP_VERSION=${RANDOM}" >> $GITHUB_ENV
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: "Log into Docker Hub"
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        env:
+          IMAGE_NAME: test-image
+          USERNAME: melvinsamuel070
+        run: |
+          echo ${{ env.APP_VERSION }}
+          docker build -t $USERNAME/$IMAGE_NAME:${{ env.APP_VERSION }} .
+      - name: Push Docker image to Docker Hub
+        env:
+          IMAGE_NAME: test-image
+          USERNAME: melvinsamuel070
+        run: |
+          docker push $USERNAME/$IMAGE_NAME:${{ env.APP_VERSION }}
+  notify:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Send Slack message for build success
+        if: success()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: 'D079JHV7H60'  # Replace with your channel ID
+          slack-message: "GitHub build succeeded! 🎉\n[Build URL](${{ github.event.head_commit.url }})"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Send Slack message for build failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: 'D079JHV7H60'  # Replace with your channel ID
+          slack-message: "GitHub build failed. 😞\n[Build URL](${{ github.event.head_commit.url }})"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+       ## This action is to send email notification for the randomly generated app version numbers
+      - name: "Send email notification for the latest version of the deployment"
+        uses: dawidd6/action-send-mail@v3
+        with:
+         username: melvinsamuel070@gmail.com
+         password: ${{ secrets.EMAIL_PASSWORD }}
+         server_address: smtp.gmail.com
+         server_port: 465
+         secure: true
+         subject: "New Docker Image release"
+         to: "melvinsamuel070@gmail.com"
+         from: "Admin_DevOps"
+         body: "New image release version: ${{ env.APP_VERSION }}"   

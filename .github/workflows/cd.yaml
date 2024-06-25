@@ -1,0 +1,41 @@
+name: CD
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+jobs:
+  pull_and_run_code:
+    runs-on: self-hosted
+
+    steps:
+      - name: Stop the container
+        run: docker stop test-calc || true
+
+      - name: Remove the container test-calc
+        run: docker rm test-calc || true
+
+      - name: Get the code from Docker Hub
+        run: docker pull monyslim/test-image:1
+
+      - name: Run the image as a container
+        run: docker run -d -p 3004:3000 --name test-calc monyslim/test-image:1
+
+      - name: Send Slack message for deployment success
+        if: success()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: 'D079JHV7H60'  # Replace with your channel ID
+          slack-message: "Deployment succeeded! 🎉\n[Commit URL](${{ github.event.workflow_run.head_commit.url }})"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Send Slack message for deployment failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: 'D079JHV7H60C'  # Replace with your channel ID
+          slack-message: "Deployment failed. 😞\n[Commit URL](${{ github.event.workflow_run.head_commit.url }})"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
