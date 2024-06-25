@@ -26,7 +26,7 @@ jobs:
         if: success()
         uses: slackapi/slack-github-action@v1.26.0
         with:
-          channel-id: 'D0799K7GX63'  # Replace with your channel ID
+          channel-id: 'D079X2V5Q9F'  # Replace with your channel ID
           slack-message: "Deployment succeeded! 🎉\n[Commit URL](${{ github.event.workflow_run.head_commit.url }})"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
@@ -35,7 +35,7 @@ jobs:
         if: failure()
         uses: slackapi/slack-github-action@v1.26.0
         with:
-          channel-id: 'D0799K7GX63'  # Replace with your channel ID
+          channel-id: 'D079X2V5Q9F'  # Replace with your channel ID
           slack-message: "Deployment failed. 😞\n[Commit URL](${{ github.event.workflow_run.head_commit.url }})"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
