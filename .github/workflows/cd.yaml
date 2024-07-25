@@ -39,3 +39,90 @@ jobs:
           slack-message: "Deployment failed. 😞\n[Commit URL](${{ github.event.workflow_run.head_commit.url }})"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install kubectl
+        run: |
+          # Install kubectl
+          sudo apt-get update && sudo apt-get install -y apt-transport-https
+          curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          sudo apt-get update
+          sudo apt-get install -y kubectl
+
+      - name: Verify kubectl version
+        run: kubectl version --client
+  install:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+
+        - name: Install minikube
+          run: |
+            # Install minikube
+              sudo apt update
+              sudo apt install -y curl wget apt-transport-https
+              curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+              sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+        - name: Verifiy minikube installation 
+          run: |
+            minikube version
+            minikube start
+        
+        - name: Deploy to Kubernetes
+          run: |
+            echo '---
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: docker-app
+            spec:
+              replicas: 3
+              selector:
+                matchLabels:
+                  app: app
+              template:
+                metadata:
+                  labels:
+                    app: app
+                spec:
+                  containers:
+                    - name: docker-app
+                      image: test-image:1
+                      ports:
+                        - containerPort: 80' > deployment.yaml
+            kubectl apply -f deployment.yaml
+
+        - name: Check deployment status
+          run: |
+            kubectl get nodes
+        - name: Deploy Kubernetes Service
+          run: |
+            echo '---
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: app-services
+            spec:
+              selector:
+                app: app
+              ports:
+                - port: 80
+                  targetPort: 80
+              type: LoadBalancer' > service.yaml
+            kubectl apply -f service.yaml
+
+        - name: Check deployment status
+          run: |
+            kubectl get svc
+
+
+         
