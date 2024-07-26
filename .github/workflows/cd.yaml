@@ -1,4 +1,5 @@
 name: CD
+
 on:
   workflow_run:
     workflows: ["CI"]
@@ -8,7 +9,6 @@ on:
 jobs:
   pull_and_run_code:
     runs-on: self-hosted
-
     steps:
       - name: Stop the container
         run: docker stop test-calc || true
@@ -40,7 +40,6 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
-
   deploy:
     runs-on: ubuntu-latest
     steps:
@@ -58,71 +57,94 @@ jobs:
 
       - name: Verify kubectl version
         run: kubectl version --client
-  install:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v2
 
-        - name: Install minikube
-          run: |
-            # Install minikube
-              sudo apt update
-              sudo apt install -y curl wget apt-transport-https
-              curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-              sudo install minikube-linux-amd64 /usr/local/bin/minikube
+  install_minikube:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-        - name: Verifiy minikube installation 
-          run: |
-            minikube version
-            minikube start
+      - name: Install minikube
+        run: |
+          # Install minikube
+          sudo apt update
+          sudo apt install -y curl wget apt-transport-https
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+      - name: Verify minikube installation
+        run: |
+          minikube version
+          minikube start
         
-        - name: Deploy to Kubernetes
-          run: |
-            echo '---
-            apiVersion: apps/v1
-            kind: Deployment
-            metadata:
-              name: docker-app
-            spec:
-              replicas: 3
-              selector:
-                matchLabels:
-                  app: app
-              template:
-                metadata:
-                  labels:
-                    app: app
-                spec:
-                  containers:
-                    - name: docker-app
-                      image: test-image:1
-                      ports:
-                        - containerPort: 80' > deployment.yaml
-            kubectl apply -f deployment.yaml
-
-        - name: Check deployment status
-          run: |
-            kubectl get nodes
-        - name: Deploy Kubernetes Service
-          run: |
-            echo '---
-            apiVersion: v1
-            kind: Service
-            metadata:
-              name: app-services
-            spec:
-              selector:
+      - name: Deploy to Kubernetes
+        run: |
+          echo '---
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: docker-app
+          spec:
+            replicas: 3
+            selector:
+              matchLabels:
                 app: app
-              ports:
-                - port: 80
-                  targetPort: 80
-              type: LoadBalancer' > service.yaml
-            kubectl apply -f service.yaml
+            template:
+              metadata:
+                labels:
+                  app: app
+              spec:
+                containers:
+                  - name: docker-app
+                    image: test-image:1
+                    ports:
+                      - containerPort: 80' > deployment.yaml
+          kubectl apply -f deployment.yaml
 
-        - name: Check deployment status
-          run: |
-            kubectl get svc
+      - name: Check deployment status
+        run: kubectl get nodes
 
+      - name: Deploy Kubernetes Service
+        run: |
+          echo '---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: app-services
+          spec:
+            selector:
+              app: app
+            ports:
+              - port: 80
+                targetPort: 80
+            type: LoadBalancer' > service.yaml
+          kubectl apply -f service.yaml
 
-         
+      - name: Check service status
+        run: kubectl get svc
+
+  install_helm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Helm
+        run: |
+          # Install Helm
+          curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+          sudo apt-get install apt-transport-https --yes
+          echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+          sudo apt-get update
+          sudo apt-get install helm --yes
+
+      - name: Install ingress-nginx
+        run: |
+          helm repo add nginx-stable https://helm.nginx.com/stable
+          helm repo update
+          helm upgrade --install ingress-nginx nginx-stable/ingress-nginx --namespace ingress-nginx --create-namespace
+
+      - name: Install cert-manager
+        run: |
+          helm repo add jetstack https://charts.jetstack.io
+          helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.11.0 --set installCRDs=true
