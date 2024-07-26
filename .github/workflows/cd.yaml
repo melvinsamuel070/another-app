@@ -76,7 +76,7 @@ jobs:
         run: |
           minikube version
           minikube start
-        
+
       - name: Deploy to Kubernetes
         run: |
           echo '---
