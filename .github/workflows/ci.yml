@@ -103,17 +103,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install minikube
+      - name: Install Minikube
         run: |
           sudo apt update
           sudo apt install -y curl wget apt-transport-https
           curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
           sudo install minikube-linux-amd64 /usr/local/bin/minikube
 
-      - name: Verify minikube installation
+      - name: Verify Minikube installation
+        run: minikube version
+
+      - name: Start Minikube
+        run: minikube start --driver=docker
+
+      - name: Check Minikube status
+        run: minikube status
+
+      - name: Set up kubectl
         run: |
-          minikube version
-          minikube start
+          kubectl config use-context minikube
+          kubectl version --client
 
       - name: Deploy to Kubernetes
         run: |
@@ -140,7 +149,7 @@ jobs:
           kubectl apply -f deployment.yaml
 
       - name: Check deployment status
-        run: kubectl get nodes
+        run: kubectl get deployments
 
       - name: Deploy Kubernetes Service
         run: |
@@ -163,6 +172,7 @@ jobs:
 
   install_helm:
     runs-on: ubuntu-latest
+    needs: install_minikube
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -175,13 +185,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install helm --yes
 
+      - name: Verify Helm installation
+        run: helm version --short
+
       - name: Install ingress-nginx
         run: |
           helm repo add nginx-stable https://helm.nginx.com/stable
           helm repo update
-          helm upgrade --install ingress-nginx nginx-stable/ingress-nginx --namespace ingress-nginx --create-namespace
-
-      - name: Install cert-manager
-        run: |
-          helm repo add jetstack https://charts.jetstack.io
-          helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.11.0 --set installCRDs=true
+          helm upgrade --install ingress-nginx nginx-stable/ingress-nginx --namespace ingress-nginx --create-namespace --debug
