@@ -17,10 +17,10 @@ jobs:
         run: docker rm test-calc || true
 
       - name: Get the code from Docker Hub
-        run: docker pull monyslim/test-image:1.1
+        run: docker pull monyslim/test-image:1
 
       - name: Run the image as a container
-        run: docker run -d -p 3004:3000 --name test-calc monyslim/test-image:1.1
+        run: docker run -d -p 3004:3000 --name test-calc monyslim/test-image:1
 
       - name: Send Slack message for deployment success
         if: success()
