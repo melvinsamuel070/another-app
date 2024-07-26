@@ -149,8 +149,4 @@ jobs:
       - name: Verify Helm installation
         run: helm version --short
 
-      - name: Install ingress-nginx
-        run: |
-          helm repo add nginx-stable https://helm.nginx.com/stable
-          helm repo update
-          helm upgrade --install ingress-nginx nginx-stable/ingress-nginx --namespace ingress-nginx --create-namespace --debug
+
