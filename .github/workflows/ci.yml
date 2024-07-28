@@ -31,7 +31,7 @@ jobs:
 
       - name: Build Docker image
         env:
-          IMAGE_NAME: test-image
+          IMAGE_NAME: pix-mix
           USERNAME: melvinsamuel070
         run: |
           echo ${{ env.APP_VERSION }}
@@ -39,7 +39,7 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         env:
-          IMAGE_NAME: test-image
+          IMAGE_NAME: pix-mix
           USERNAME: melvinsamuel070
         run: |
           docker push $USERNAME/$IMAGE_NAME:${{ env.APP_VERSION }}
