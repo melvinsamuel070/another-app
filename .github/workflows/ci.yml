@@ -8,23 +8,22 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
 
-      - name: "Print the Github Object version number"
+      - name: Print the Github Object version number
         run: echo "APP_VERSION=${RANDOM}" >> $GITHUB_ENV
 
       - name: Use Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: 12
 
       - name: Install Dependencies
         run: npm install
 
-      - name: "Log into Docker Hub"
-        uses: docker/login-action@v3
+      - name: Log into Docker Hub
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -66,7 +65,7 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
-      - name: "Send email notification for the latest version of the deployment"
+      - name: Send email notification for the latest version of the deployment
         uses: dawidd6/action-send-mail@v3
         with:
           username: melvinsamuel070@gmail.com
@@ -87,12 +86,12 @@ jobs:
 
       - name: Install kubectl
         run: |
-          sudo apt-get update && sudo apt-get install -y apt-transport-https
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https
           curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           sudo chmod +x ./kubectl
           sudo mv ./kubectl /usr/local/bin/kubectl
-          sudo apt-get install -y kubectl
 
       - name: Verify kubectl version
         run: kubectl version --client
@@ -105,8 +104,8 @@ jobs:
 
       - name: Install Minikube
         run: |
-          sudo apt update
-          sudo apt install -y curl wget apt-transport-https
+          sudo apt-get update
+          sudo apt-get install -y curl wget apt-transport-https
           curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
           sudo install minikube-linux-amd64 /usr/local/bin/minikube
 
@@ -188,4 +187,14 @@ jobs:
       - name: Verify Helm installation
         run: helm version --short
 
+  install_ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
+      - name: Install Ansible
+        run: |
+          sudo apt-get update -y
+          sudo apt-get upgrade -y
+          sudo apt-get install ansible -y
