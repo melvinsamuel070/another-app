@@ -243,17 +243,17 @@ jobs:
 
       - name: Terraform Initialization
         run: terraform init
-        working-directory: ./home/melvin/terraform  # adjust if your .tf files are in a subdirectory
+        working-directory: ./home/melvin/another-app  # adjust if your .tf files are in a subdirectory
 
       - name: Terraform Plan
         run: terraform plan
-        working-directory: ./home/melvin/terraform # adjust if needed
+        working-directory: ./home/melvin/another-app # adjust if needed
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
-        working-directory: ./home/melvin/terraform  # adjust if needed
+        working-directory: ./home/melvin/another-app  # adjust if needed
         env:
-          TERRAFORM_CLI_PATH: /home/melvin/terraform
+          TERRAFORM_CLI_PATH: /home/melvin/another-app
 
   configure:
     runs-on: ubuntu-latest
