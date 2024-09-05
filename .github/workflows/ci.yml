@@ -166,6 +166,31 @@ jobs:
             type: LoadBalancer' > service.yaml
           kubectl apply -f service.yaml
 
+          - name: Deploy Ingress
+          run: |
+            echo "Deploying Ingress..."
+            echo '---
+            apiVersion: networking.k8s.io/v1
+            kind: Ingress
+            metadata:
+              name: app-ingress
+              annotations:
+                nginx.ingress.kubernetes.io/rewrite-target: /
+            spec:
+              rules:
+                - host: your-domain.com
+                  http:
+                    paths:
+                      - path: /
+                        pathType: Prefix
+                        backend:
+                          service:
+                            name: app-services
+                            port:
+                              number: 80' > ingress.yaml
+            kubectl apply -f ingress.yaml
+            echo "Ingress applied"
+  
       - name: Check service status
         run: kubectl get svc
 
