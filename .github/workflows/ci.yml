@@ -234,15 +234,26 @@ jobs:
         with:
           terraform_version: 1.4.0  # specify your Terraform version here
 
+  terraform:
+    runs-on: ubuntu-latest
+    needs: install_terraform
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Terraform Initialization
         run: terraform init
-      
+        working-directory: ./path/to/terraform/config  # adjust if your .tf files are in a subdirectory
+
       - name: Terraform Plan
         run: terraform plan
+        working-directory: ./path/to/terraform/config  # adjust if needed
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
-
+        working-directory: ./path/to/terraform/config  # adjust if needed
+        env:
+          TERRAFORM_CLI_PATH: /home/melvin/terraform
 
   configure:
     runs-on: ubuntu-latest
